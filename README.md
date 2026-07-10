@@ -40,24 +40,23 @@
 
 ---
 
-
 ## 目录
 
 - [功能特性](#功能特性)
 - [项目架构](#项目架构)
 - [目录结构](#目录结构)
 - [第一部分：私有部署后端（Cloudflare）](#第一部分私有部署后端cloudflare)
-  - [0. 准备工作](#0-准备工作)
-  - [1. 注册 Cloudflare 账号](#1-注册-cloudflare-账号)
-  - [2. 创建 Worker](#2-创建-worker)
-  - [3. 创建 D1 数据库并建表](#3-创建-d1-数据库并建表)
-  - [4. 创建 KV 命名空间](#4-创建-kv-命名空间)
-  - [5. 给 Worker 绑定 D1 和 KV](#5-给-worker-绑定-d1-和-kv)
-  - [6. 设置两个密钥](#6-设置两个密钥)
-  - [7. 粘贴 Worker 代码并部署](#7-粘贴-worker-代码并部署)
-  - [8. 可选：绑定自定义域名](#8-可选绑定自定义域名)
-  - [9. 灌入内置规则](#9-灌入内置规则)
-  - [10. 验证后端](#10-验证后端)
+    - [0. 准备工作](#0-准备工作)
+    - [1. 注册 Cloudflare 账号](#1-注册-cloudflare-账号)
+    - [2. 创建 Worker](#2-创建-worker)
+    - [3. 创建 D1 数据库并建表](#3-创建-d1-数据库并建表)
+    - [4. 创建 KV 命名空间](#4-创建-kv-命名空间)
+    - [5. 给 Worker 绑定 D1 和 KV](#5-给-worker-绑定-d1-和-kv)
+    - [6. 设置两个密钥](#6-设置两个密钥)
+    - [7. 粘贴 Worker 代码并部署](#7-粘贴-worker-代码并部署)
+    - [8. 可选：绑定自定义域名](#8-可选绑定自定义域名)
+    - [9. 灌入内置规则](#9-灌入内置规则)
+    - [10. 验证后端](#10-验证后端)
 - [第二部分：安装浏览器插件](#第二部分安装浏览器插件)
 - [第三部分：使用教程](#第三部分使用教程)
 - [工作原理](#工作原理)
@@ -73,8 +72,8 @@
 - **一键解析**：粘贴 `ip:端口:账号:密码`、`账号:密码@ip:端口` 等多种格式自动填表。
 - **代理测速**：一键测试节点延迟。
 - **两种分流模式**
-  - **全局模式**：所有网站走当前代理（白名单 / 国内域名除外）。
-  - **规则模式**：只有命中规则的域名走代理，其余直连。
+    - **全局模式**：所有网站走当前代理（白名单 / 国内域名除外）。
+    - **规则模式**：只有命中规则的域名走代理，其余直连。
 - **精确域名匹配**：后缀匹配（`google.com` 只命中它及其子域，不会误伤 `notgoogle.com`），支持 `*.google` 通配。
 - **内置规则库**：AI（OpenAI/Claude/Grok 等）、Google 全家桶（含 195 个国别域名）、社交、流媒体、开发工具等，云端可管理、可同步。
 - **国内域名直连**：`.cn` 及中文顶级域自动直连（可开关）。
@@ -139,13 +138,13 @@ uu-proxy/
 
 **几个名词先了解一下**（不懂也没关系，照做就行）：
 
-| 名词 | 通俗解释 |
-|------|----------|
-| **Worker** | 一段跑在 Cloudflare 服务器上的代码，就是我们的"后端程序"。 |
-| **D1** | Cloudflare 提供的 SQL 数据库，我们用它存**账号**。 |
-| **KV** | Cloudflare 提供的键值存储，我们用它存**加密配置**和**内置规则**。 |
+| 名词                | 通俗解释                                                                                                                                      |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Worker**          | 一段跑在 Cloudflare 服务器上的代码，就是我们的"后端程序"。                                                                                    |
+| **D1**              | Cloudflare 提供的 SQL 数据库，我们用它存**账号**。                                                                                            |
+| **KV**              | Cloudflare 提供的键值存储，我们用它存**加密配置**和**内置规则**。                                                                             |
 | **绑定（Binding）** | 把 D1 / KV "接"到 Worker 上，让 Worker 代码能访问它们。绑定时要起一个**变量名**，我们代码里固定用 `DB` 和 `CONFIG_KV`，**名字必须一模一样**。 |
-| **密钥（Secret）** | 保存在 Cloudflare 里的机密字符串，代码能读到但别人看不到。我们要设两个。 |
+| **密钥（Secret）**  | 保存在 Cloudflare 里的机密字符串，代码能读到但别人看不到。我们要设两个。                                                                      |
 
 ---
 
@@ -167,10 +166,10 @@ uu-proxy/
 3. 给 Worker 起个名字，比如 `proxy-soft`（这个名字会成为你的地址 `proxy-soft.你的账号.workers.dev` 的一部分，只能用小写字母、数字、连字符）。
 4. 点 **Deploy（部署）**。此时会部署一个默认的示例代码，先不管它，我们后面替换。
 5. 部署成功后，记下你的 Worker 地址，形如：
-   ```
-   https://proxy-soft.你的账号.workers.dev
-   ```
-   点页面上的地址能打开（显示示例内容）就说明 Worker 建好了。
+    ```
+    https://proxy-soft.你的账号.workers.dev
+    ```
+    点页面上的地址能打开（显示示例内容）就说明 Worker 建好了。
 
 ---
 
@@ -188,17 +187,17 @@ uu-proxy/
 1. 进入刚创建的数据库，找到 **Console（控制台 / 查询）** 标签页。
 2. 把下面这条 SQL **单独**粘进去，点执行（Execute / Run）：
 
-   ```sql
-   CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, auth_hash TEXT NOT NULL, server_salt TEXT NOT NULL, token TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
-   ```
+    ```sql
+    CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, auth_hash TEXT NOT NULL, server_salt TEXT NOT NULL, token TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+    ```
 
 3. 执行成功后，**再单独**粘这条，点执行：
 
-   ```sql
-   CREATE INDEX IF NOT EXISTS idx_users_token ON users(token);
-   ```
+    ```sql
+    CREATE INDEX IF NOT EXISTS idx_users_token ON users(token);
+    ```
 
-   > ⚠️ 一定要**一条一条**执行，不要两条一起粘、也不要带 `--` 注释，否则 D1 控制台可能报 `incomplete input` 错误。
+    > ⚠️ 一定要**一条一条**执行，不要两条一起粘、也不要带 `--` 注释，否则 D1 控制台可能报 `incomplete input` 错误。
 
 建好后，在数据库的 Tables（表）里能看到 `users` 表就对了。
 
@@ -224,14 +223,14 @@ uu-proxy/
 **5.1 绑定 D1**
 
 3. 在 Bindings 里点 **Add（添加）** → 选 **D1 database**。
-4. **Variable name（变量名）** 填：`DB`  ← **必须是大写的 DB，不能改**
+4. **Variable name（变量名）** 填：`DB` ← **必须是大写的 DB，不能改**
 5. **D1 database** 选你第 3 步创建的 `uu-proxy-db`。
 6. 保存。
 
 **5.2 绑定 KV**
 
 7. 再点 **Add** → 选 **KV namespace**。
-8. **Variable name（变量名）** 填：`CONFIG_KV`  ← **必须一模一样**
+8. **Variable name（变量名）** 填：`CONFIG_KV` ← **必须一模一样**
 9. **KV namespace** 选你第 4 步创建的 `uu-proxy-kv`。
 10. 保存。
 
@@ -247,8 +246,8 @@ uu-proxy/
 
 - 名称：`TOKEN_SECRET`
 - 值：一段随机长字符串。生成方法（任选）：
-  - 在电脑终端跑：`openssl rand -hex 32`
-  - 或在线随机字符串生成器，弄一段 64 位十六进制。
+    - 在电脑终端跑：`openssl rand -hex 32`
+    - 或在线随机字符串生成器，弄一段 64 位十六进制。
 - **作用**：给用户登录后的"登录凭证（token）"做数字签名。它保证 token 不能被伪造，并让**同一账号在任意多台设备同时登录、互不掉线**。
 - **注意**：一旦设定，**不要随便更换**——更换后所有已登录用户的 token 会立即失效，需要重新登录。
 
@@ -300,15 +299,17 @@ uu-proxy/
 2. 下载本仓库的 **`builtin.json`**，放到电脑某个文件夹，在该文件夹打开终端。
 3. 执行（把 `<你的ADMIN_KEY>` 换成第 6 步那个，把地址换成你的 Worker 地址或自定义域）：
 
-   **Windows PowerShell：**
-   ```powershell
-   curl.exe -X PUT https://你的地址/builtin -H "Content-Type: application/json" -H "X-Admin-Key: <你的ADMIN_KEY>" --data "@builtin.json"
-   ```
+    **Windows PowerShell：**
 
-   **Mac / Linux：**
-   ```bash
-   curl -X PUT https://你的地址/builtin -H "Content-Type: application/json" -H "X-Admin-Key: <你的ADMIN_KEY>" --data @builtin.json
-   ```
+    ```powershell
+    curl.exe -X PUT https://你的地址/builtin -H "Content-Type: application/json" -H "X-Admin-Key: <你的ADMIN_KEY>" --data "@builtin.json"
+    ```
+
+    **Mac / Linux：**
+
+    ```bash
+    curl -X PUT https://你的地址/builtin -H "Content-Type: application/json" -H "X-Admin-Key: <你的ADMIN_KEY>" --data @builtin.json
+    ```
 
 4. 返回 `{"ok":true,"version":...}` 即成功。
 
@@ -348,13 +349,13 @@ curl -X POST https://你的地址/login -H "Content-Type: application/json" -d "
 如果你部署了自己的后端（第一部分），插件默认连接的是作者的后端地址，**必须改成你自己的**：
 
 1. 用文本编辑器打开 `background.js`，把第 5 行：
-   ```js
-   const WORKER = "https://proxy-soft.19920806.xyz";
-   ```
-   改成你自己的 Worker 地址（第 2 步的 `workers.dev` 或第 8 步的自定义域），**结尾不要带斜杠**：
-   ```js
-   const WORKER = "https://你的地址";
-   ```
+    ```js
+    const WORKER = "https://proxy-soft.19920806.xyz";
+    ```
+    改成你自己的 Worker 地址（第 2 步的 `workers.dev` 或第 8 步的自定义域），**结尾不要带斜杠**：
+    ```js
+    const WORKER = "https://你的地址";
+    ```
 2. 同样地，打开 `popup.js`，把第 5 行的 `const WORKER = ...` 改成一样的地址。
 
 > 两个文件都要改，且地址必须一致。
@@ -392,7 +393,7 @@ curl -X POST https://你的地址/login -H "Content-Type: application/json" -d "
 ## 自定义规则（自定义规则 标签）
 
 - 顶部选 **代理** 或 **直连**，输入域名（支持空格 / 逗号 / 分号 / `|` / `#` 批量），点添加。
-  - 类型选**代理** = 该域名走代理；选**直连** = 强制直连（即"白名单"）。
+    - 类型选**代理** = 该域名走代理；选**直连** = 强制直连（即"白名单"）。
 - 必须填**完整域名**（如 `google.com`），不支持半截关键词。
 - 中间的下拉可按"全部 / 已启用 / 已禁用"过滤，旁边搜索框可搜规则。
 - 每条可**启用/禁用/删除**；**点域名文字可复制**。
@@ -402,16 +403,16 @@ curl -X POST https://你的地址/login -H "Content-Type: application/json" -d "
 
 - 这里是**内置规则库**，默认只读，可按状态筛选、可本机启用/禁用某条。
 - 想**增删云端内置规则**（所有设备同步）需要管理权限：
-  1. 先在设置里**登录账号**。
-  2. 账号那一行点 **管理** → 输入你的 `ADMIN_KEY` → 解锁（本机记住，下次自动解锁）。
-  3. 解锁后系统规则页顶部出现添加框，可加/删内置域名，直接写入云端。
-  4. 点「同步内置规则」可从云端拉取最新内置库。
+    1. 先在设置里**登录账号**。
+    2. 账号那一行点 **管理** → 输入你的 `ADMIN_KEY` → 解锁（本机记住，下次自动解锁）。
+    3. 解锁后系统规则页顶部出现添加框，可加/删内置域名，直接写入云端。
+    4. 点「同步内置规则」可从云端拉取最新内置库。
 
 ## 账号与云同步（设置 标签）
 
 - **未登录**：显示"登录 / 注册"。
 - **注册/登录**：账号 3–32 位；密码用于**端到端加密**——它在本地派生出加密密钥，配置加密后才上传，**服务器看不到你的代理密码**。
-  - ⚠️ **忘记密码 = 云端配置无法恢复**（这是端到端加密的代价）。
+    - ⚠️ **忘记密码 = 云端配置无法恢复**（这是端到端加密的代价）。
 - **自动同步**：登录后，任何改动（增删代理、切换、改规则、改设置）会在约 2 秒后自动加密上传。
 - **手动同步**：`⬆ 上传到云端` / `⬇ 从云端恢复`，覆盖前会提示确认。
 - **多设备**：另一台设备登录同一账号即可拉回配置；同一账号可任意多设备同时在线。
@@ -437,6 +438,7 @@ curl -X POST https://你的地址/login -H "Content-Type: application/json" -d "
 ### 匹配优先级
 
 **全局模式**（命中即停）：
+
 1. 内网 IP / 本机 / localhost → 直连
 2. 自定义白名单（直连）→ 直连
 3. 内置白名单（直连）→ 直连
@@ -444,6 +446,7 @@ curl -X POST https://你的地址/login -H "Content-Type: application/json" -d "
 5. 其余 → 走代理
 
 **规则模式**（命中即停）：
+
 1. 内网 IP / 本机 / localhost → 直连
 2. 自定义白名单（直连）→ 直连
 3. 自定义代理规则 → 走代理
@@ -504,6 +507,17 @@ Chrome 不支持 socks5 代理认证，请改用 http/https，或用免认证 so
 - 导出的 JSON 含代理密码明文，注意保管。
 - 端到端加密只保护"传输和服务器存储"，本机上代理密码是明文（扩展要用它连代理，无法避免）。
 - 忘记账号密码将无法恢复云端配置。
+
+---
+
+## 版权与声明
+
+本项目为原创开源项目，采用 MIT License。
+
+- 欢迎 Fork、二次开发与分发，但请遵守 MIT 协议**保留本项目版权声明并注明来源**。
+- 如果对你有帮助，欢迎点个 Star ⭐
+
+> 本项目仅供学习与个人使用。使用者需遵守所在国家/地区的法律法规，因使用本工具产生的任何后果由使用者自行承担，与作者无关。
 
 ---
 
