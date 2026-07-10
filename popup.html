@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="popup.css" />
+  <title>UU Proxy</title>
+</head>
+<body>
+  <nav class="uu-tabs" id="tabs">
+    <div class="uu-tab-slider" id="tabSlider"></div>
+    <button class="uu-tab active" data-tab="proxies">代理列表</button>
+    <button class="uu-tab" data-tab="custom">自定义规则</button>
+    <button class="uu-tab" data-tab="system">系统规则</button>
+    <button class="uu-tab" data-tab="settings">设置</button>
+  </nav>
+
+  <div class="uu-content">
+    <!-- 代理列表 -->
+    <section class="uu-pane active" id="pane-proxies">
+      <button class="uu-btn uu-btn-primary uu-add" id="addBtn"><span class="uu-plus">＋</span> 添加代理</button>
+      <div class="uu-list" id="proxyList"></div>
+    </section>
+
+    <!-- 自定义规则 -->
+    <section class="uu-pane" id="pane-custom">
+      <div class="uu-fixed">
+        <div class="uu-rule-add">
+          <select id="ruleType" class="uu-mini-select">
+            <option value="proxy">代理</option>
+            <option value="direct">直连</option>
+          </select>
+          <input type="text" id="ruleInput" placeholder="域名，如 google.com（空格 , ; | # 批量）" />
+          <button class="uu-btn uu-btn-primary uu-btn-sm" id="ruleAddBtn">添加</button>
+        </div>
+        <div class="uu-rule-toolbar">
+          <select id="ruleFilterSel" class="uu-mini-select">
+            <option value="all">全部</option>
+            <option value="on">已启用</option>
+            <option value="off">已禁用</option>
+          </select>
+          <input type="text" id="ruleSearch" class="uu-search" placeholder="搜索规则…" />
+        </div>
+      </div>
+      <div class="uu-table-wrap" id="customTableWrap"></div>
+    </section>
+
+    <!-- 系统规则 -->
+    <section class="uu-pane" id="pane-system">
+      <div class="uu-fixed">
+        <div id="sysAdminBar" style="display:none">
+          <div class="uu-rule-add">
+            <select id="sysRuleType" class="uu-mini-select">
+              <option value="proxy">代理</option>
+              <option value="direct">直连</option>
+            </select>
+            <input type="text" id="sysRuleInput" placeholder="域名，如 t.me（空格 , ; | # 批量）" />
+            <button class="uu-btn uu-btn-primary uu-btn-sm" id="sysRuleAddBtn">添加</button>
+          </div>
+        </div>
+        <div class="uu-rule-toolbar">
+          <select id="sysFilterSel" class="uu-mini-select">
+            <option value="all">全部</option>
+            <option value="on">已启用</option>
+            <option value="off">已禁用</option>
+          </select>
+          <button class="uu-btn uu-btn-ghost uu-btn-sm" id="sysSyncBtn">同步内置规则</button>
+          <button class="uu-btn uu-btn-ghost uu-btn-sm" id="sysAdminExit" style="display:none">退出管理</button>
+        </div>
+      </div>
+      <div class="uu-table-wrap" id="systemTableWrap"></div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="uu-pane" id="pane-settings">
+      <div class="uu-account guest" id="account"></div>
+
+      <div class="uu-field">
+        <label>测速网站</label>
+        <input type="text" id="fTestUrl" placeholder="https://ip.cn/" />
+      </div>
+
+      <div class="uu-field">
+        <div class="uu-switch-row">
+          <div class="uu-switch-info">
+            <div class="uu-switch-title">国内域名直连</div>
+            <div class="uu-hint">.cn 和中文后缀域名直连，开启后全局模式也直连</div>
+          </div>
+          <label class="uu-switch"><input type="checkbox" id="cnDirectToggle" /><span class="uu-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="uu-field">
+        <label>内置规则</label>
+        <button class="uu-btn uu-btn-ghost uu-btn-sm uu-wide" id="setSyncBtn">同步内置规则（覆盖本地内置）</button>
+        <div class="uu-hint" id="builtinInfo">未加载内置规则</div>
+      </div>
+
+      <div class="uu-field">
+        <label>配置备份</label>
+        <div class="uu-backup-row">
+          <button class="uu-btn uu-btn-ghost uu-btn-sm" id="exportBtn">导出 JSON</button>
+          <button class="uu-btn uu-btn-ghost uu-btn-sm" id="importBtn">导入 JSON</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden />
+        </div>
+        <div class="uu-hint">导出为明文 JSON（含代理账号密码），请妥善保管，勿分享给他人。</div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="uu-footer" id="footer">
+    <div class="uu-foot-info">
+      <div class="uu-foot-modes">
+        <label><input type="radio" name="mode" value="all" /> 全局模式</label>
+        <label><input type="radio" name="mode" value="rules" /> 规则模式</label>
+      </div>
+      <span class="uu-foot-status" id="footStatus">已关闭 · 直连</span>
+    </div>
+    <label class="uu-switch" title="代理总开关">
+      <input type="checkbox" id="masterToggle" />
+      <span class="uu-slider"></span>
+    </label>
+  </footer>
+
+  <!-- Proxy modal -->
+  <div class="uu-overlay" id="proxyOverlay">
+    <div class="uu-modal">
+      <div class="uu-modal-head"><span id="proxyModalTitle">添加代理</span><button class="uu-x" data-close>✕</button></div>
+      <div class="uu-modal-body">
+        <div class="uu-field">
+          <label>一键解析代理</label>
+          <div class="uu-parse-row">
+            <input type="text" id="parseInput" placeholder="ip:端口:账号:密码 / 账号:密码@ip:端口 …" />
+            <button class="uu-btn uu-btn-primary uu-btn-sm" id="parseBtn">解析</button>
+          </div>
+          <div class="uu-hint">支持 ip:端口、ip:端口:账号:密码、账号:密码@ip:端口、ip:端口@账号:密码、ip:端口##账号##密码、ip,端口,账号,密码</div>
+        </div>
+        <div class="uu-field"><label>代理名称</label><input type="text" id="fName" placeholder="例如：香港节点 01" /></div>
+        <div class="uu-grid2">
+          <div class="uu-field"><label>协议</label>
+            <select id="fProtocol"><option value="http">http</option><option value="https">https</option><option value="socks5">socks5</option></select>
+          </div>
+          <div class="uu-field"><label>端口</label><input type="text" id="fPort" inputmode="numeric" placeholder="8080" maxlength="5" /></div>
+        </div>
+        <div class="uu-field"><label>IP / 域名</label><input type="text" id="fHost" placeholder="1.2.3.4 或 proxy.example.com" /></div>
+        <div class="uu-grid2">
+          <div class="uu-field"><label>用户名<span class="uu-opt">可空</span></label><input type="text" id="fUser" placeholder="用户名" autocomplete="off" /></div>
+          <div class="uu-field"><label>密码<span class="uu-opt">可空</span></label><input type="password" id="fPass" placeholder="密码" autocomplete="off" /></div>
+        </div>
+      </div>
+      <div class="uu-modal-foot"><button class="uu-btn uu-btn-ghost" data-close>取消</button><button class="uu-btn uu-btn-primary" id="proxySaveBtn">保存</button></div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div class="uu-overlay" id="confirmOverlay">
+    <div class="uu-modal uu-modal-sm">
+      <div class="uu-modal-body"><div class="uu-confirm-msg" id="confirmMsg"></div></div>
+      <div class="uu-modal-foot"><button class="uu-btn uu-btn-ghost" id="confirmNo">取消</button><button class="uu-btn uu-btn-primary" id="confirmYes">确定</button></div>
+    </div>
+  </div>
+
+  <!-- Auth modal -->
+  <div class="uu-overlay" id="authOverlay">
+    <div class="uu-modal">
+      <div class="uu-modal-head"><span id="authTitle">登录</span><button class="uu-x" data-close-auth>✕</button></div>
+      <div class="uu-modal-body">
+        <div class="uu-field"><label>账号</label><input type="text" id="authUser" autocomplete="off" placeholder="3-32 位账号" /></div>
+        <div class="uu-field"><label>密码</label><input type="password" id="authPass" autocomplete="off" placeholder="密码" /></div>
+        <div class="uu-hint">端到端加密：密码用于加密你的配置，服务器无法看到明文。<b>忘记密码将无法恢复云端配置。</b></div>
+      </div>
+      <div class="uu-modal-foot"><button class="uu-btn uu-btn-ghost" data-close-auth>取消</button><button class="uu-btn uu-btn-primary" id="authSubmit">确定</button></div>
+    </div>
+  </div>
+
+  <!-- Admin modal -->
+  <div class="uu-overlay" id="adminOverlay">
+    <div class="uu-modal uu-modal-sm">
+      <div class="uu-modal-head"><span>系统规则管理</span><button class="uu-x" data-close-admin>✕</button></div>
+      <div class="uu-modal-body">
+        <div class="uu-field"><label>管理密钥（ADMIN_KEY）</label><input type="password" id="adminKeyInput" autocomplete="off" placeholder="输入管理密钥以解锁" /></div>
+        <div class="uu-hint">解锁后可在「系统规则」页添加/删除内置规则（写入云端，所有设备同步）。密钥仅保存在本机。</div>
+      </div>
+      <div class="uu-modal-foot"><button class="uu-btn uu-btn-ghost" data-close-admin>取消</button><button class="uu-btn uu-btn-primary" id="adminSubmit">解锁</button></div>
+    </div>
+  </div>
+
+  <div class="uu-toast-layer" id="toastLayer"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
