@@ -8,17 +8,17 @@
 
 ## 界面预览
 
-<!-- 图片放在项目的 image/ 目录下，命名 1.png ~ 5.png。下方标题可按你的截图实际内容调整。 -->
+<!-- 图片放在项目的 images/ 目录下，命名 1.png ~ 5.png。下方标题可按你的截图实际内容调整。 -->
 
 <table>
   <tr>
-    <td align="center"><img src="image/1.png" width="180" /><br/>代理列表</td>
-    <td align="center"><img src="image/2.png" width="180" /><br/>自定义规则</td>
-    <td align="center"><img src="image/3.png" width="180" /><br/>系统规则</td>
+    <td align="center"><img src="images/1.png" width="260" /><br/>代理列表</td>
+    <td align="center"><img src="images/2.png" width="260" /><br/>自定义规则</td>
+    <td align="center"><img src="images/3.png" width="260" /><br/>系统规则</td>
   </tr>
   <tr>
-    <td align="center"><img src="image/4.png" width="180" /><br/>设置</td>
-    <td align="center"><img src="image/5.png" width="180" /><br/>规则分流</td>
+    <td align="center"><img src="images/4.png" width="260" /><br/>设置</td>
+    <td align="center"><img src="images/5.png" width="260" /><br/>规则分流</td>
     <td></td>
   </tr>
 </table>
@@ -131,6 +131,7 @@ uu-proxy/
 ├── popup.css          弹窗样式
 ├── popup.js           弹窗逻辑：代理/规则/系统规则/设置、加密、同步、导入导出
 ├── icons/             图标
+├── images/            README 界面预览图（1.png ~ 5.png）
 ├── worker.js          【后端】Cloudflare Worker 完整代码（部署用）
 ├── schema.sql         【后端】D1 建表语句
 ├── builtin.json       内置规则初始数据（灌入 KV 用）
