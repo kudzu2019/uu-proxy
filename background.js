@@ -11,7 +11,6 @@ const DEFAULT_STATE = {
   mode: "all",                 // "all" | "rules"
   rules: [],                   // [{ v, on, type:"proxy"|"direct" }]  (direct = 白名单)
   testUrl: "https://ip.cn/",
-  cnDirect: true,              // 国内域名直连开关
   builtinRules: null           // { version, updatedAt, proxy:[{v,on}], direct:[{v,on}] }
 };
 
@@ -70,42 +69,42 @@ function asciiList(arr) { return arr.map(asciiHost); }
 /* ---------------- PAC 生成 ---------------- */
 function buildPac(proxy, state) {
   const token = pacToken(proxy);
+  // Google/YouTube 国别域并入内置代理，一起参与"最长匹配"
+  const bProxy = asciiList(builtinVals(state.builtinRules, "proxy")).concat(GOOGLE_TLDS);
   const cfg = {
     token: token,
     mode: state.mode,
-    cnDirect: !!state.cnDirect,
-    cnTlds: CN_TLDS,
-    googleTlds: GOOGLE_TLDS,
     cProxy: asciiList(customVals(state.rules, "proxy")),
     cDirect: asciiList(customVals(state.rules, "direct")),
-    bProxy: asciiList(builtinVals(state.builtinRules, "proxy")),
+    bProxy: bProxy,
     bDirect: asciiList(builtinVals(state.builtinRules, "direct"))
   };
   return "var CFG=" + JSON.stringify(cfg) + ";\n" + PAC_BODY;
 }
 
-// PAC 主体（字符串，注入到浏览器执行）
+// PAC 主体（字符串，注入浏览器执行）——同层内"最长后缀匹配优先"
 const PAC_BODY = [
   "var ipRe=/^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/;",
   "var privRe=[/^10\\./,/^127\\./,/^192\\.168\\./,/^169\\.254\\./,/^172\\.(1[6-9]|2\\d|3[01])\\./,/^100\\.(6[4-9]|[7-9]\\d|1[01]\\d|12[0-7])\\./];",
   "function isPriv(h){if(!ipRe.test(h))return false;for(var i=0;i<privRe.length;i++){if(privRe[i].test(h))return true;}return false;}",
-  "function inList(h,l){for(var i=0;i<l.length;i++){var p=l[i];if(p.charCodeAt(0)===42&&p.charCodeAt(1)===46){var b=p.substring(2);if(h===b||h.length>b.length&&h.substring(h.length-b.length-1)==='.'+b)return true;}else{if(h===p||h.length>p.length&&h.substring(h.length-p.length-1)==='.'+p)return true;}}return false;}",
-  "function endTld(h,l){for(var i=0;i<l.length;i++){var t=l[i];if(h===t||h.length>t.length&&h.substring(h.length-t.length-1)==='.'+t)return true;}return false;}",
+  // 返回列表中命中该 host 的"最长"规则的域名长度；未命中返回 -1
+  "function bestLen(h,l){var best=-1;for(var i=0;i<l.length;i++){var p=l[i];var b=(p.charCodeAt(0)===42&&p.charCodeAt(1)===46)?p.substring(2):p;if(h===b||(h.length>b.length&&h.substring(h.length-b.length-1)==='.'+b)){if(b.length>best)best=b.length;}}return best;}",
+  // 在一组(代理列表, 直连列表)中按最长匹配决定类型；都不命中返回 null
+  "function pick(h,pl,dl,token){var pp=bestLen(h,pl),dd=bestLen(h,dl);if(pp<0&&dd<0)return null;return pp>dd?token:'DIRECT';}",
   "function FindProxyForURL(url,host){",
   "  host=host.toLowerCase();",
   "  if(host.indexOf('.')<0||host==='localhost'||isPriv(host))return 'DIRECT';",
+  // 自定义规则整体优先（内部最长匹配）
+  "  var c=pick(host,CFG.cProxy,CFG.cDirect,CFG.token);",
+  "  if(c!==null)return c;",
   "  if(CFG.mode==='all'){",
-  "    if(inList(host,CFG.cDirect))return 'DIRECT';",
-  "    if(inList(host,CFG.bDirect))return 'DIRECT';",
-  "    if(CFG.cnDirect&&endTld(host,CFG.cnTlds))return 'DIRECT';",
-  "    return CFG.token;",
+  "    if(bestLen(host,CFG.bDirect)>=0)return 'DIRECT';",  // 全局：内置白名单直连
+  "    return CFG.token;",                                   // 其余全走代理
   "  }",
-  "  if(inList(host,CFG.cDirect))return 'DIRECT';",
-  "  if(inList(host,CFG.cProxy))return CFG.token;",
-  "  if(CFG.cnDirect&&endTld(host,CFG.cnTlds))return 'DIRECT';",
-  "  if(inList(host,CFG.bDirect))return 'DIRECT';",
-  "  if(inList(host,CFG.bProxy)||endTld(host,CFG.googleTlds))return CFG.token;",
-  "  return 'DIRECT';",
+  // 规则模式：内置规则（内部最长匹配）
+  "  var b=pick(host,CFG.bProxy,CFG.bDirect,CFG.token);",
+  "  if(b!==null)return b;",
+  "  return 'DIRECT';",                                      // 默认直连
   "}"
 ].join("\n");
 

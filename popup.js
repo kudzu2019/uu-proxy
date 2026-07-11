@@ -5,7 +5,7 @@ const AUTH_KEY = "uuAuth";
 const WORKER = "https://proxy-soft.19920806.xyz";
 const DEFAULTS = {
   proxies: [], currentProxyId: null, enabled: false, mode: "all",
-  rules: [], testUrl: "https://ip.cn/", cnDirect: true, builtinRules: null
+  rules: [], testUrl: "https://ip.cn/", builtinRules: null
 };
 
 let state = null;
@@ -228,7 +228,6 @@ function renderSystemTable() {
 function renderSettings() {
   renderAccount();
   $("#fTestUrl").value = state.testUrl || DEFAULTS.testUrl;
-  $("#cnDirectToggle").checked = state.cnDirect !== false;
   const b = state.builtinRules;
   $("#builtinInfo").textContent = b ? ("内置版本 v" + b.version + " · 代理 " + b.proxy.length + " 条 · 直连 " + b.direct.length + " 条") : "未加载内置规则";
 }
@@ -329,7 +328,6 @@ async function onToggle(e) {
   state.enabled = want; await persist(); render(); toast(want ? "代理已开启" : "代理已关闭");
 }
 async function onModeChange(e) { state.mode = e.target.value; await persist(); renderFooter(); toast(state.mode === "rules" ? "已切换：规则模式" : "已切换：全局模式"); }
-async function onCnDirectChange(e) { state.cnDirect = e.target.checked; await persist(); toast(state.cnDirect ? "国内域名直连：开" : "国内域名直连：关"); }
 
 /* ---------------- copy to clipboard ---------------- */
 async function copyText(text) {
@@ -476,12 +474,12 @@ async function api(path, method, body, useAuth) {
   if (!res.ok) throw new Error((data && data.error) || ("HTTP " + res.status));
   return data;
 }
-function syncPayload() { return { proxies: state.proxies, currentProxyId: state.currentProxyId, enabled: state.enabled, mode: state.mode, rules: state.rules, testUrl: state.testUrl, cnDirect: state.cnDirect }; }
+function syncPayload() { return { proxies: state.proxies, currentProxyId: state.currentProxyId, enabled: state.enabled, mode: state.mode, rules: state.rules, testUrl: state.testUrl }; }
 function applyPayload(o) {
   state = Object.assign({}, DEFAULTS, {
     proxies: Array.isArray(o.proxies) ? o.proxies : [], currentProxyId: o.currentProxyId || null,
     enabled: !!o.enabled, mode: o.mode === "rules" ? "rules" : "all", rules: o.rules || [],
-    testUrl: o.testUrl || DEFAULTS.testUrl, cnDirect: o.cnDirect !== false, builtinRules: state.builtinRules
+    testUrl: o.testUrl || DEFAULTS.testUrl, builtinRules: state.builtinRules
   });
   normRules();
 }
@@ -623,7 +621,6 @@ function bindEvents() {
 
   // settings
   $("#fTestUrl").addEventListener("change", async () => { let u = $("#fTestUrl").value.trim() || DEFAULTS.testUrl; if (!/^https?:\/\//i.test(u)) u = "https://" + u; state.testUrl = u; $("#fTestUrl").value = u; await persist(); toast("已保存测速网站"); });
-  $("#cnDirectToggle").addEventListener("change", onCnDirectChange);
   $("#setSyncBtn").addEventListener("click", syncBuiltin);
   $("#exportBtn").addEventListener("click", exportConfig);
   $("#importBtn").addEventListener("click", () => $("#importFile").click());
