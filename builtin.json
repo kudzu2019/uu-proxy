@@ -200,8 +200,6 @@
     "apkpure.com",
     "f-droid.org",
     "xda-developers.com",
-    "outlook.live.com",
-    "outlook.office.com",
     "wikipedia.org",
     "wikimedia.org",
     "archive.org",
@@ -216,7 +214,12 @@
     "pastebin.com",
     "patreon.com",
     "pixiv.net",
-    "raw.githubusercontent.com"
+    "iesdev.com",
+    "link.com",
+    "o2online.de",
+    "anyrouter.top",
+    "page.link",
+    "curl.se"
   ],
   "direct": [
     "cn.bing.com",
