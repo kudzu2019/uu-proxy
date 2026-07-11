@@ -6,6 +6,25 @@
 
 ---
 
+## 界面预览
+
+<!-- 图片放在项目的 image/ 目录下，命名 1.png ~ 5.png。下方标题可按你的截图实际内容调整。 -->
+
+<table>
+  <tr>
+    <td align="center"><img src="image/1.png" width="180" /><br/>代理列表</td>
+    <td align="center"><img src="image/2.png" width="180" /><br/>自定义规则</td>
+    <td align="center"><img src="image/3.png" width="180" /><br/>系统规则</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="image/4.png" width="180" /><br/>设置</td>
+    <td align="center"><img src="image/5.png" width="180" /><br/>规则分流</td>
+    <td></td>
+  </tr>
+</table>
+
+---
+
 ## 🚀 两种使用方式（先看这里）
 
 **这个插件的后端（Cloudflare）是完全可选的。** 你可以根据需求二选一：
@@ -506,6 +525,7 @@ Chrome 不支持 socks5 代理认证，请改用 http/https，或用免认证 so
 
 - 欢迎 Fork、二次开发与分发，但请遵守 MIT 协议**保留本项目版权声明并注明来源**。
 - 如果对你有帮助，欢迎点个 Star ⭐
+- 交流与反馈：[在 linux.do 讨论](https://linux.do)
 
 > 本项目仅供学习与个人使用。使用者需遵守所在国家/地区的法律法规，因使用本工具产生的任何后果由使用者自行承担，与作者无关。
 
